@@ -25,15 +25,17 @@ PMS-CYNERZA is a robust, high-performance backend system designed for modern Hot
 - **📅 Advanced Inventory Engine**
   - **Auto-generation**: Automatically generates 90 days of inventory on room creation
   - **Real-time Availability**: Date-wise room tracking
-  - **Overbooking Prevention**: Atomic database transactions with row-level locking
+  - **Overbooking Prevention**: Atomic database transactions with row-level locking (SELECT FOR UPDATE)
+  - **Calendar API**: Dedicated endpoints for availability grid and booking events
 
 - **📝 Booking System**
-  - Transactional booking flow (All-or-Nothing)
-  - Automatic balance limits and payment tracking
-  - Intelligent check-in/check-out validation
+  - **Atomic Transactions**: All-or-Nothing booking flow prevents partial writes
+  - **Race Condition Handling**: Safe inventory deduction even under high load
+  - **Smart Validation**: Intelligent check-in/check-out and inventory checks
+  - **Financial Tracking**: Automatic balance limits and payment tracking
 
 - **👥 Customer CRM**
-  - Automatic customer profile creation
+  - Automatic customer profile creation on booking
   - Booking history tracking
   - Outstanding balance monitoring
 
@@ -55,11 +57,11 @@ PMS-CYNERZA is a robust, high-performance backend system designed for modern Hot
 ```bash
 PMS-CYNERZA/
 ├── app/
-│   ├── core/           # Config, Security, Database setup
+│   ├── core/           # Config, Security, Database setup, Exceptions
 │   ├── models/         # SQLAlchemy Database Models
-│   ├── routers/        # API Endpoints (Auth, inventory, bookings, etc.)
+│   ├── routers/        # API Endpoints (Auth, inventory, bookings, calendar)
 │   ├── schemas/        # Pydantic Response/Request Schemas
-│   ├── services/       # Business Logic & Complex Operations
+│   ├── services/       # Business Logic (Transactions, Locking, complex queries)
 │   ├── utils/          # Helper functions
 │   └── main.py         # App Entry Point
 ├── alembic/            # Database Migrations
@@ -125,6 +127,16 @@ FastAPI provides automatic, interactive documentation. Once the server is runnin
 - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
+### Key Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/login/json` | Admin login (returns JWT) |
+| GET | `/calendar/availability` | Get room availability grid for UI |
+| GET | `/calendar/bookings` | Get booking events for calendar view |
+| POST | `/bookings` | Create new booking (Atomic) |
+| GET | `/room-types` | List all room categories |
+
 ### Default Admin Credentials
 *Use these to obtain your initial JWT Token*
 - **Email**: `admin@hotel.com`
@@ -144,11 +156,13 @@ pytest
 
 ## 🗺️ Roadmap
 
+- [x] Atomic Booking Engine
+- [x] Calendar Availability API
+- [x] Overbooking Protection
 - [ ] Payment Gateway Integration (Stripe/Razorpay)
-- [ ] Email/SMS Notifications for confirmations
+- [ ] Email/SMS Notifications
 - [ ] Frontend Dashboard (React/Next.js)
 - [ ] Reporting & Analytics Module
-- [ ] Multi-property support
 
 ---
 
