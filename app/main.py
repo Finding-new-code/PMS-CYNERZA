@@ -20,7 +20,8 @@ from app.routers import (
     room_type_router,
     inventory_router,
     booking_router,
-    customer_router
+    customer_router,
+    calendar_router
 )
 
 settings = get_settings()
@@ -80,6 +81,7 @@ app = FastAPI(
     * **Inventory**: Date-wise room availability management
     * **Bookings**: Transactional booking with overbooking prevention
     * **Customers**: CRM with booking history and balance tracking
+    * **Calendar**: Availability grid and booking events for calendar UI
     
     ## Getting Started
     
@@ -124,6 +126,7 @@ app.include_router(room_type_router)
 app.include_router(inventory_router)
 app.include_router(booking_router)
 app.include_router(customer_router)
+app.include_router(calendar_router)
 
 
 # Health check endpoint

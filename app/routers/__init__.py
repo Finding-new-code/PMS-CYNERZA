@@ -5,11 +5,13 @@ from app.routers.room_type import router as room_type_router
 from app.routers.inventory import router as inventory_router
 from app.routers.booking import router as booking_router
 from app.routers.customer import router as customer_router
+from app.routers.calendar import router as calendar_router
 
 __all__ = [
     "auth_router",
     "room_type_router",
     "inventory_router",
     "booking_router",
-    "customer_router"
+    "customer_router",
+    "calendar_router"
 ]
