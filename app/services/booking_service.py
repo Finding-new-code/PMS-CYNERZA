@@ -182,13 +182,16 @@ async def create_booking(
     async with db.begin_nested():  # Savepoint for nested transaction safety
         # 4a. Reserve inventory (locks rows with SELECT FOR UPDATE)
         # This is the CRITICAL section that prevents overbooking
-        total_amount = await reserve_inventory(
+        calculated_amount = await reserve_inventory(
             db,
             booking_data.room_type_id,
             booking_data.check_in,
             booking_data.check_out,
             booking_data.num_rooms
         )
+        
+        # Use manual total_amount if provided, otherwise use calculated
+        total_amount = booking_data.total_amount if booking_data.total_amount is not None else calculated_amount
         
         # 4b. Get or create customer
         customer = await get_or_create_customer(
