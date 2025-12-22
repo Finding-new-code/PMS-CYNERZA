@@ -16,7 +16,7 @@ export default function CustomersPage() {
     // Use debounced search in real app
     const { data, isLoading, isError } = useCustomers(page, 10, search);
 
-    const customers = data?.data || [];
+    const customers = (data as any)?.items || (data as any)?.data || [];
     const total = data?.total || 0;
 
     return (

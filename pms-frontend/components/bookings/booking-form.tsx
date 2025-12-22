@@ -13,53 +13,84 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { bookingSchema, BookingFormValues } from '@/lib/validations/booking';
-import { useCreateBooking } from '@/lib/hooks/use-bookings';
+import { useCreateBooking, useModifyBooking } from '@/lib/hooks/use-bookings';
 import { useCustomers } from '@/lib/hooks/use-customers';
 import { useRoomTypes } from '@/lib/hooks/use-rooms';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { Booking } from '@/types/booking';
+import { format } from 'date-fns';
 
-export function BookingForm() {
+interface BookingFormProps {
+    initialData?: Booking;
+    bookingId?: number;
+}
+
+export function BookingForm({ initialData, bookingId }: BookingFormProps) {
     const router = useRouter();
     const createBooking = useCreateBooking();
+    const modifyBooking = useModifyBooking();
 
     // Fetch data for dropdowns
     const { data: customersData, isLoading: isLoadingCustomers } = useCustomers(1, 100); // Fetch first 100 for now
-    const { data: roomTypes, isLoading: isLoadingRoomTypes } = useRoomTypes();
+    const { data: roomTypesData, isLoading: isLoadingRoomTypes } = useRoomTypes();
+
+    // Normalize data access for both API and mock data formats
+    const customers = (customersData as any)?.items || (customersData as any)?.data || customersData || [];
+    const roomTypes = Array.isArray(roomTypesData) ? roomTypesData : (roomTypesData as any)?.data || [];
 
     const form = useForm<BookingFormValues>({
         resolver: zodResolver(bookingSchema) as any,
         defaultValues: {
-            customer_id: '',
-            room_type_id: '',
-            check_in: '',
-            check_out: '',
-            num_adults: 1,
-            num_children: 0,
-            num_rooms: 1,
-            notes: '',
+            customer_id: initialData?.customer_id?.toString() || '',
+            room_type_id: initialData?.room_type_id?.toString() || '',
+            check_in: initialData?.check_in ? format(new Date(initialData.check_in), 'yyyy-MM-dd') : '',
+            check_out: initialData?.check_out ? format(new Date(initialData.check_out), 'yyyy-MM-dd') : '',
+            num_adults: initialData?.num_adults || 1,
+            num_children: initialData?.num_children || 0,
+            num_rooms: initialData?.num_rooms || 1,
+            notes: initialData?.notes || '',
         },
     });
 
     async function onSubmit(data: BookingFormValues) {
         try {
-            await createBooking.mutateAsync({
-                customer_id: parseInt(data.customer_id),
-                room_type_id: parseInt(data.room_type_id),
-                check_in: new Date(data.check_in),
-                check_out: new Date(data.check_out),
-                num_adults: data.num_adults,
-                num_children: data.num_children,
-                num_rooms: data.num_rooms,
-                notes: data.notes,
-            });
+            if (initialData && bookingId) {
+                await modifyBooking.mutateAsync({
+                    id: bookingId,
+                    data: {
+                        room_type_id: parseInt(data.room_type_id),
+                        check_in: new Date(data.check_in),
+                        check_out: new Date(data.check_out),
+                        num_adults: data.num_adults,
+                        num_children: data.num_children,
+                        num_rooms: data.num_rooms,
+                        notes: data.notes,
+                        // Customer cannot be changed in simple edit usually, or we pass it if needed.
+                        // For now assuming customer change is allowed but backend handle it.
+                        // Actually Types usually expect customer_id.
+                        customer_id: parseInt(data.customer_id),
+                    },
+                });
+            } else {
+                await createBooking.mutateAsync({
+                    customer_id: parseInt(data.customer_id),
+                    room_type_id: parseInt(data.room_type_id),
+                    check_in: new Date(data.check_in),
+                    check_out: new Date(data.check_out),
+                    num_adults: data.num_adults,
+                    num_children: data.num_children,
+                    num_rooms: data.num_rooms,
+                    notes: data.notes,
+                });
+            }
             router.push('/bookings');
         } catch (error) {
             // Error handled by mutation
         }
     }
 
-    const isLoading = createBooking.isPending || isLoadingCustomers || isLoadingRoomTypes;
+    const isLoading = createBooking.isPending || modifyBooking.isPending || isLoadingCustomers || isLoadingRoomTypes;
 
     return (
         <Form {...form}>
@@ -78,7 +109,7 @@ export function BookingForm() {
                                         {...field}
                                     >
                                         <option value="">Select a customer</option>
-                                        {customersData?.data.map((customer) => (
+                                        {customers.map((customer: any) => (
                                             <option key={customer.id} value={customer.id}>
                                                 {customer.full_name} ({customer.email})
                                             </option>
@@ -102,7 +133,7 @@ export function BookingForm() {
                                         {...field}
                                     >
                                         <option value="">Select a room type</option>
-                                        {roomTypes?.map((type) => (
+                                        {roomTypes?.map((type: any) => (
                                             <option key={type.id} value={type.id}>
                                                 {type.name} - ${type.base_price}/night
                                             </option>
@@ -205,7 +236,7 @@ export function BookingForm() {
                     </Button>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Create Booking
+                        {initialData ? 'Update Booking' : 'Create Booking'}
                     </Button>
                 </div>
             </form>

@@ -39,7 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
 
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
-        if (!token) {
+        
+        // Demo mode: If no token and in development, use mock user
+        const isDemoMode = process.env.NODE_ENV === 'development';
+        
+        if (!token && !isDemoMode) {
             setUser(null);
             setIsLoading(false);
             return;
@@ -50,8 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
             setUser(data);
         } catch (error) {
             console.error('Auth verification failed:', error);
-            localStorage.removeItem('access_token');
-            setUser(null);
+            
+            // In demo mode, create a mock user when backend is unavailable
+            if (isDemoMode) {
+                console.warn('Demo mode: Using mock user (backend unavailable)');
+                setUser({
+                    id: 1,
+                    email: 'admin@hotel.com',
+                    name: 'Demo Admin',
+                    role: 'admin',
+                });
+            } else {
+                localStorage.removeItem('access_token');
+                setUser(null);
+            }
         } finally {
             setIsLoading(false);
         }

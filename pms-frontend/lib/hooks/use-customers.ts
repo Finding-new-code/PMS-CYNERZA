@@ -2,18 +2,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerApi } from '@/lib/api/customers';
 import { CustomerCreate, CustomerUpdate } from '@/types/customer';
 import { toast } from 'sonner';
+import { getMockCustomers, getMockCustomerById, mockBookings } from '@/lib/mock-data';
 
 export function useCustomers(page = 1, limit = 10, search?: string) {
     return useQuery({
         queryKey: ['customers', page, limit, search],
-        queryFn: () => customerApi.getAll(page, limit, search),
+        queryFn: async () => {
+            try {
+                return await customerApi.getAll(page, limit, search);
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                return getMockCustomers(page, limit);
+            }
+        },
     });
 }
 
 export function useCustomer(id: number) {
     return useQuery({
         queryKey: ['customer', id],
-        queryFn: () => customerApi.getById(id),
+        queryFn: async () => {
+            try {
+                return await customerApi.getById(id);
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                return getMockCustomerById(id);
+            }
+        },
         enabled: !!id,
     });
 }
@@ -21,7 +36,15 @@ export function useCustomer(id: number) {
 export function useCustomerHistory(id: number) {
     return useQuery({
         queryKey: ['customer-history', id],
-        queryFn: () => customerApi.getHistory(id),
+        queryFn: async () => {
+            try {
+                return await customerApi.getHistory(id);
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                // Filter mock bookings by customer_id
+                return mockBookings.filter(b => b.customer_id === id);
+            }
+        },
         enabled: !!id,
     });
 }

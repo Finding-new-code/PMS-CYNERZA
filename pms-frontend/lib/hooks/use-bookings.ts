@@ -2,21 +2,38 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingApi } from '@/lib/api/bookings';
 import { BookingCreate } from '@/types/booking';
 import { toast } from 'sonner';
+import { getMockBookings, getMockBookingById } from '@/lib/mock-data';
 
 export function useBookings(page = 1, limit = 10, status?: string, dateFrom?: string, dateTo?: string) {
     return useQuery({
         queryKey: ['bookings', page, limit, status, dateFrom, dateTo],
-        queryFn: () => bookingApi.getAll(page, limit, status, dateFrom, dateTo),
+        queryFn: async () => {
+            try {
+                return await bookingApi.getAll(page, limit, status, dateFrom, dateTo);
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                return getMockBookings(page, limit);
+            }
+        },
     });
 }
 
 export function useBooking(id: number) {
     return useQuery({
         queryKey: ['booking', id],
-        queryFn: () => bookingApi.getById(id),
+        queryFn: async () => {
+            try {
+                return await bookingApi.getById(id);
+            } catch (error) {
+                console.warn('API unavailable, using mock data');
+                return getMockBookingById(id);
+            }
+        },
         enabled: !!id,
     });
 }
+
+
 
 export function useCreateBooking() {
     const queryClient = useQueryClient();

@@ -18,7 +18,7 @@ export default function BookingsPage() {
     // For now we just implement status filter.
     const { data, isLoading } = useBookings(page, 10, status === 'all' ? undefined : status);
 
-    const bookings = data?.data || [];
+    const bookings = (data as any)?.items || (data as any)?.data || [];
     const total = data?.total || 0;
 
     return (
