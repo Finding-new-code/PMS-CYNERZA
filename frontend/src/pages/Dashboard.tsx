@@ -98,7 +98,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KPICard
                     title="Total Revenue"
-                    value={`$${overview?.total_revenue?.toLocaleString() ?? '0'}`}
+                    value={`$${Number(overview?.total_revenue ?? 0).toLocaleString()}`}
                     icon={DollarSign}
                     color="text-green-600"
                     bgColor="bg-green-50"
@@ -115,7 +115,7 @@ export default function Dashboard() {
                 />
                 <KPICard
                     title="Occupancy Rate"
-                    value={`${overview?.occupancy_rate?.toFixed(1) ?? '0.0'}%`}
+                    value={`${Number(overview?.occupancy_rate ?? 0).toFixed(1)}%`}
                     icon={Building2}
                     color="text-purple-600"
                     bgColor="bg-purple-50"
@@ -123,7 +123,7 @@ export default function Dashboard() {
                 />
                 <KPICard
                     title="Avg Daily Rate"
-                    value={`$${overview?.average_daily_rate?.toFixed(0) ?? '0'}`}
+                    value={`$${Number(overview?.average_daily_rate ?? 0).toFixed(0)}`}
                     subtitle="ADR"
                     icon={Target}
                     color="text-orange-600"
@@ -148,7 +148,7 @@ export default function Dashboard() {
                 />
                 <MetricCard
                     title="Average Daily Revenue"
-                    value={`$${revenue?.average_daily_revenue?.toFixed(0) ?? '0'}`}
+                    value={`$${Number(revenue?.average_daily_revenue ?? 0).toFixed(0)}`}
                     icon={TrendingUp}
                     color="text-blue-600"
                 />
@@ -284,11 +284,11 @@ export default function Dashboard() {
                                         </td>
                                         <td className="text-right py-3 px-4 text-gray-700">{room.total_rooms_booked}</td>
                                         <td className="text-right py-3 px-4 text-gray-700 font-semibold">
-                                            ${room.total_revenue.toLocaleString()}
+                                            ${Number(room.total_revenue).toLocaleString()}
                                         </td>
                                         <td className="text-right py-3 px-4">
                                             <span className="text-gray-700 font-medium">
-                                                {room.booking_share_percentage.toFixed(1)}%
+                                                {Number(room.booking_share_percentage).toFixed(1)}%
                                             </span>
                                         </td>
                                     </tr>
