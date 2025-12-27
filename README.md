@@ -139,8 +139,13 @@ Use these credentials to log in to the Dashboard:
 
 ## 📚 Documentation
 
+### Technical Documentation
 - **API Docs (Swagger)**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - **API Specs (ReDoc)**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+
+### Business Documentation
+- **📊 [Investor Overview](INVESTOR_OVERVIEW.md)**: Comprehensive business plan and investment opportunity
+- **🎯 [Presentation Guide](INVESTOR_PRESENTATION_GUIDE.md)**: How to present PMS-CYNERZA to investors
 
 ---
 
