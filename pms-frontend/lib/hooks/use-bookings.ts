@@ -3,6 +3,30 @@ import { bookingApi } from '@/lib/api/bookings';
 import { BookingCreate } from '@/types/booking';
 import { toast } from 'sonner';
 
+// Helper function to extract error message from API response
+function getErrorMessage(error: any): string {
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === 'string') {
+        return detail;
+    }
+
+    // Handle FastAPI validation error format (array of errors)
+    if (Array.isArray(detail)) {
+        return detail.map((err: any) => {
+            const field = err.loc?.slice(1).join('.') || 'field';
+            return `${field}: ${err.msg}`;
+        }).join(', ');
+    }
+
+    // Handle object format
+    if (typeof detail === 'object' && detail !== null) {
+        return JSON.stringify(detail);
+    }
+
+    return error.message || 'An unexpected error occurred';
+}
+
 export function useBookings(page = 1, limit = 10, status?: string, dateFrom?: string, dateTo?: string) {
     return useQuery({
         queryKey: ['bookings', page, limit, status, dateFrom, dateTo],
@@ -31,7 +55,7 @@ export function useCreateBooking() {
             toast.success('Booking created successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Failed to create booking');
+            toast.error(getErrorMessage(error));
         },
     });
 }
@@ -50,7 +74,7 @@ export function useModifyBooking() {
             toast.success('Booking updated successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Failed to update booking');
+            toast.error(getErrorMessage(error));
         },
     });
 }
@@ -69,7 +93,7 @@ export function useCancelBooking() {
             toast.success('Booking cancelled successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Failed to cancel booking');
+            toast.error(getErrorMessage(error));
         },
     });
 }

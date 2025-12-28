@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { apiClient } from '@/lib/api/client';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 const loginSchema = z.object({
     email: z.string().email('Invalid email address'),
@@ -27,9 +27,15 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-
+    const { login, user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthLoading && user) {
+            router.push('/');
+        }
+    }, [user, isAuthLoading, router]);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -42,16 +48,7 @@ export default function LoginPage() {
     async function onSubmit(values: LoginFormValues) {
         setIsLoading(true);
         try {
-            // Backend expects form data for login/json usually or json?
-            // Rules say POST /auth/login/json
-            const response = await apiClient.post('/auth/login/json', {
-                email: values.email,
-                password: values.password,
-            });
-
-            const { access_token } = response.data;
-            localStorage.setItem('access_token', access_token);
-
+            await login(values.email, values.password);
             toast.success('Login successful');
             router.push('/');
         } catch (error: any) {

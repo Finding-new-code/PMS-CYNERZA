@@ -44,7 +44,23 @@ export function MonthView() {
 
     const getAvailabilityForDate = (date: Date) => {
         const dateStr = format(date, 'yyyy-MM-dd');
-        return availability?.find((a) => a.date === dateStr);
+        // Backend returns flat array with one entry per room type per date
+        // Group them by date
+        const roomTypesForDate = availability?.filter((a) => a.date === dateStr) || [];
+
+        if (roomTypesForDate.length === 0) return null;
+
+        return {
+            date: dateStr,
+            room_types: roomTypesForDate.map((a) => ({
+                id: a.room_type_id,
+                name: a.room_type_name,
+                available: a.available_rooms,
+                booked: a.total_rooms - a.available_rooms,
+                total: a.total_rooms,
+                status: a.status,
+            })),
+        };
     };
 
     if (isLoading) {
@@ -94,12 +110,12 @@ export function MonthView() {
                         const isTodayDate = isToday(day);
 
                         // Simple availability summary: total available across all room types
-                        const totalAvailable = dayAvailability?.room_types.reduce(
+                        const totalAvailable = dayAvailability?.room_types?.reduce(
                             (sum, rt) => sum + rt.available,
                             0,
                         ) || 0;
 
-                        const totalBooked = dayAvailability?.room_types.reduce(
+                        const totalBooked = dayAvailability?.room_types?.reduce(
                             (sum, rt) => sum + rt.booked,
                             0,
                         ) || 0;

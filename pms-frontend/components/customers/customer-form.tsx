@@ -13,22 +13,19 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-// Textarea and Select imports removed as they are not used yet and caused build errors
-import { Customer, CustomerCreate, CustomerUpdate } from '@/types/customer';
+import { Customer } from '@/types/customer';
 import { useCreateCustomer, useUpdateCustomer } from '@/lib/hooks/use-customers';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+// Schema matches backend CustomerCreate
 const customerSchema = z.object({
-    full_name: z.string().min(2, 'Name must be at least 2 characters'),
+    name: z.string().min(1, 'Name is required').max(255),
     email: z.string().email('Invalid email address'),
-    phone_number: z.string().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
-    identity_doc_type: z.string().optional(),
-    identity_doc_number: z.string().optional(),
-    notes: z.string().optional(),
+    phone: z.string().max(20).optional().or(z.literal('')),
+    address: z.string().max(500).optional().or(z.literal('')),
+    id_proof_type: z.string().max(50).optional().or(z.literal('')),
+    id_proof_number: z.string().max(100).optional().or(z.literal('')),
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -49,26 +46,37 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
     const form = useForm<CustomerFormValues>({
         resolver: zodResolver(customerSchema),
         defaultValues: {
-            full_name: initialData?.full_name || '',
+            name: initialData?.name || '',
             email: initialData?.email || '',
-            phone_number: initialData?.phone_number || '',
+            phone: initialData?.phone || '',
             address: initialData?.address || '',
-            city: initialData?.city || '',
-            country: initialData?.country || '',
-            identity_doc_type: initialData?.identity_doc_type || 'passport',
-            identity_doc_number: initialData?.identity_doc_number || '',
-            notes: initialData?.notes || '',
+            id_proof_type: initialData?.id_proof_type || '',
+            id_proof_number: initialData?.id_proof_number || '',
         },
     });
 
     async function onSubmit(data: CustomerFormValues) {
-        if (isEditing && customerId) {
-            await updateCustomer.mutateAsync({ id: customerId, data });
-        } else {
-            await createCustomer.mutateAsync(data);
+        try {
+            // Clean up empty strings to undefined for optional fields
+            const cleanData = {
+                name: data.name,
+                email: data.email,
+                phone: data.phone || undefined,
+                address: data.address || undefined,
+                id_proof_type: data.id_proof_type || undefined,
+                id_proof_number: data.id_proof_number || undefined,
+            };
+
+            if (isEditing && customerId) {
+                await updateCustomer.mutateAsync({ id: customerId, data: cleanData });
+            } else {
+                await createCustomer.mutateAsync(cleanData);
+            }
+            router.push('/customers');
+            router.refresh();
+        } catch (error) {
+            // Error handled by mutation hook
         }
-        router.push('/customers');
-        router.refresh();
     }
 
     return (
@@ -77,10 +85,10 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                         control={form.control}
-                        name="full_name"
+                        name="name"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Full Name *</FormLabel>
+                                <FormLabel>Name *</FormLabel>
                                 <FormControl>
                                     <Input placeholder="John Doe" {...field} />
                                 </FormControl>
@@ -105,40 +113,12 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
 
                     <FormField
                         control={form.control}
-                        name="phone_number"
+                        name="phone"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
+                                <FormLabel>Phone</FormLabel>
                                 <FormControl>
                                     <Input placeholder="+1 234 567 8900" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="country"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Country</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="United States" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="New York" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -152,7 +132,7 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
                             <FormItem>
                                 <FormLabel>Address</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="123 Main St" {...field} />
+                                    <Input placeholder="123 Main St, City, Country" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -161,15 +141,21 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
 
                     <FormField
                         control={form.control}
-                        name="identity_doc_type"
+                        name="id_proof_type"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>ID Type</FormLabel>
                                 <FormControl>
-                                    {/* Fallback to simple select if shadcn select not installed, but I'll assume standard select for simplicity or just input if lazy. 
-                   Actually I should use standard HTML select or install shadcn select. 
-                   I'll use standard Input for flexibility for now to avoid installing another component in this turn. */}
-                                    <Input placeholder="passport, id_card, driver_license" {...field} />
+                                    <select
+                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        {...field}
+                                    >
+                                        <option value="">Select ID type</option>
+                                        <option value="passport">Passport</option>
+                                        <option value="id_card">ID Card</option>
+                                        <option value="driver_license">Driver's License</option>
+                                        <option value="other">Other</option>
+                                    </select>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -178,7 +164,7 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
 
                     <FormField
                         control={form.control}
-                        name="identity_doc_number"
+                        name="id_proof_number"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>ID Number</FormLabel>
@@ -190,21 +176,6 @@ export function CustomerForm({ initialData, customerId }: CustomerFormProps) {
                         )}
                     />
                 </div>
-
-                <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Notes</FormLabel>
-                            <FormControl>
-                                <Input className="h-20" placeholder="VIP guest, prefers high floor..." {...field} />
-                                {/* Using Input with height as poor man's textarea if I don't want to install textarea right now. */}
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
                 <div className="flex justify-end gap-4">
                     <Button variant="outline" type="button" onClick={() => router.back()}>

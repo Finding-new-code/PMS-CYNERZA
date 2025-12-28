@@ -3,6 +3,35 @@ import { customerApi } from '@/lib/api/customers';
 import { CustomerCreate, CustomerUpdate } from '@/types/customer';
 import { toast } from 'sonner';
 
+// Helper function to extract error message from API response
+function getErrorMessage(error: any): string {
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === 'string') {
+        return detail;
+    }
+
+    // Handle FastAPI validation error format (array of errors)
+    if (Array.isArray(detail)) {
+        return detail.map((err: any) => {
+            const field = err.loc?.slice(1).join('.') || 'field';
+            return `${field}: ${err.msg}`;
+        }).join(', ');
+    }
+
+    // Handle object format
+    if (typeof detail === 'object' && detail !== null) {
+        return JSON.stringify(detail);
+    }
+
+    // Handle 405 Method Not Allowed
+    if (error.response?.status === 405) {
+        return 'This action is not supported. Customers are created automatically when making a booking.';
+    }
+
+    return error.message || 'An unexpected error occurred';
+}
+
 export function useCustomers(page = 1, limit = 10, search?: string) {
     return useQuery({
         queryKey: ['customers', page, limit, search],
@@ -37,7 +66,7 @@ export function useCreateCustomer() {
             toast.success('Customer created successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Failed to create customer');
+            toast.error(getErrorMessage(error));
         },
     });
 }
@@ -54,7 +83,7 @@ export function useUpdateCustomer() {
             toast.success('Customer updated successfully');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.detail || 'Failed to update customer');
+            toast.error(getErrorMessage(error));
         },
     });
 }
