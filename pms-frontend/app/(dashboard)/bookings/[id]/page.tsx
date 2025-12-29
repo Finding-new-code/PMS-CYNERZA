@@ -67,17 +67,14 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-zinc-500">Guests</p>
-                                <p className="text-lg">{booking.num_adults} Adults, {booking.num_children} Children</p>
-                            </div>
-                            <div>
                                 <p className="text-sm font-medium text-zinc-500">Room Type</p>
-                                <p className="text-lg">{booking.room_type?.name || 'Standard Room'}</p>
+                                <p className="text-lg">{booking.room_type_name || 'Standard Room'}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-zinc-500">Rooms</p>
-                                <p className="text-lg">{/* booking.num_rooms usually, assuming schema has it. Check type. Yes it has num_rooms in Create but maybe not in View? Let's check type. Booking interface has no num_rooms. I might have missed it in type definition. I should update type definition later. For now just assume 1 or use if available */} 1 Room</p>
+                                <p className="text-sm font-medium text-zinc-500">Number of Rooms</p>
+                                <p className="text-lg">{booking.num_rooms} Room(s)</p>
                             </div>
+
                         </CardContent>
                     </Card>
 
@@ -86,16 +83,16 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                         <CardContent className="space-y-4">
                             <div className="flex justify-between items-center border-b pb-2">
                                 <span className="text-zinc-600">Total Amount</span>
-                                <span className="text-xl font-bold">${booking.total_amount.toFixed(2)}</span>
+                                <span className="text-xl font-bold">${Number(booking.total_amount || 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-zinc-600">
                                 <span>Paid So Far</span>
-                                <span>${booking.amount_paid.toFixed(2)}</span>
+                                <span>${Number(booking.amount_paid || 0).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center font-medium">
                                 <span>Remaining Balance</span>
-                                <span className={(booking.total_amount - booking.amount_paid) > 0 ? "text-red-600" : "text-green-600"}>
-                                    ${(booking.total_amount - booking.amount_paid).toFixed(2)}
+                                <span className={(Number(booking.balance_due || 0)) > 0 ? "text-red-600" : "text-green-600"}>
+                                    ${Number(booking.balance_due || 0).toFixed(2)}
                                 </span>
                             </div>
                         </CardContent>
@@ -103,8 +100,15 @@ export default function BookingDetailsPage({ params }: { params: { id: string } 
                 </div>
 
                 <div className="md:col-span-1">
-                    {booking.customer && <CustomerDetailsCard customer={booking.customer as any} />}
-                    {/* Note: Casting as any because Booking.customer might not match Customer interface exactly if backend returns partial. Ideally should match. */}
+                    <CustomerDetailsCard customer={{
+                        id: booking.customer_id,
+                        name: booking.customer_name,
+                        email: booking.customer_email,
+                        phone: '',
+                        created_at: booking.created_at,
+                        total_balance_due: booking.balance_due,
+                        booking_count: 0,
+                    }} />
                 </div>
             </div>
         </div>

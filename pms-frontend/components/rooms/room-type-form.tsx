@@ -24,9 +24,7 @@ const roomTypeSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
     description: z.string().max(500).optional(),
     base_price: z.coerce.number().positive('Price must be positive'),
-    capacity_adults: z.coerce.number().min(1, 'At least 1 adult').max(10),
-    capacity_children: z.coerce.number().min(0).max(10),
-    total_inventory: z.coerce.number().min(1, 'At least 1 room required'),
+    total_rooms: z.coerce.number().min(1, 'At least 1 room required'),
 });
 
 type RoomTypeFormValues = z.infer<typeof roomTypeSchema>;
@@ -45,10 +43,8 @@ export function RoomTypeForm({ initialData, roomTypeId }: RoomTypeFormProps) {
         defaultValues: {
             name: initialData?.name || '',
             description: initialData?.description || '',
-            base_price: initialData?.base_price || 100,
-            capacity_adults: initialData?.capacity_adults || 2,
-            capacity_children: initialData?.capacity_children || 0,
-            total_inventory: initialData?.total_inventory || 10,
+            base_price: Number(initialData?.base_price) || 100,
+            total_rooms: initialData?.total_rooms || 10,
         },
     });
 
@@ -117,38 +113,10 @@ export function RoomTypeForm({ initialData, roomTypeId }: RoomTypeFormProps) {
                     )}
                 />
 
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-1">
                     <FormField
                         control={form.control}
-                        name="capacity_adults"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Max Adults</FormLabel>
-                                <FormControl>
-                                    <Input type="number" min="1" max="10" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="capacity_children"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Max Children</FormLabel>
-                                <FormControl>
-                                    <Input type="number" min="0" max="10" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="total_inventory"
+                        name="total_rooms"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Total Rooms</FormLabel>
