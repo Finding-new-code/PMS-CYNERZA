@@ -9,14 +9,15 @@ import {
     subWeeks,
     differenceInDays,
     isSameDay,
-    isWithinInterval,
     parseISO,
 } from 'date-fns';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { mockBookings, mockRoomTypes } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
+import { useCalendarBookings } from '@/lib/hooks/use-calendar';
+import { useRoomTypes } from '@/lib/hooks/use-rooms';
+import type { BookingEvent } from '@/lib/api/calendar';
 
 export function TimelineView() {
     const router = useRouter();
@@ -24,6 +25,16 @@ export function TimelineView() {
 
     // Generate 14-day range
     const dateRange = Array.from({ length: 14 }, (_, i) => addDays(startDate, i));
+    const endDate = addDays(startDate, 13);
+
+    // Fetch data from backend
+    const { data: roomTypes, isLoading: isLoadingRoomTypes, error: roomTypesError } = useRoomTypes();
+    const { data: bookings, isLoading: isLoadingBookings, error: bookingsError } = useCalendarBookings(
+        format(startDate, 'yyyy-MM-dd'),
+        format(endDate, 'yyyy-MM-dd'),
+        undefined,
+        false // Don't include cancelled bookings
+    );
 
     const handlePrevWeek = () => setStartDate(subWeeks(startDate, 1));
     const handleNextWeek = () => setStartDate(addWeeks(startDate, 1));
@@ -31,24 +42,17 @@ export function TimelineView() {
 
     // Get bookings for a specific room type within the date range
     const getBookingsForRoomType = (roomTypeId: number) => {
-        return mockBookings.filter((booking) => {
-            if (booking.room_type_id !== roomTypeId) return false;
-            if (booking.status === 'cancelled') return false;
+        if (!bookings) return [];
 
-            const checkIn = parseISO(booking.check_in);
-            const checkOut = parseISO(booking.check_out);
-            const rangeStart = startDate;
-            const rangeEnd = addDays(startDate, 13);
-
-            // Check if booking overlaps with our date range
-            return checkIn <= rangeEnd && checkOut >= rangeStart;
+        return bookings.filter((booking) => {
+            return booking.room_type_id === roomTypeId;
         });
     };
 
     // Calculate the position and width of a booking block
-    const getBookingStyle = (booking: typeof mockBookings[0]) => {
-        const checkIn = parseISO(booking.check_in);
-        const checkOut = parseISO(booking.check_out);
+    const getBookingStyle = (booking: BookingEvent) => {
+        const checkIn = parseISO(booking.start);
+        const checkOut = parseISO(booking.end);
         const rangeStart = startDate;
         const rangeEnd = addDays(startDate, 13);
 
@@ -83,6 +87,35 @@ export function TimelineView() {
                 return 'bg-indigo-500 hover:bg-indigo-600';
         }
     };
+
+    // Loading state
+    if (isLoadingRoomTypes || isLoadingBookings) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    // Error state
+    if (roomTypesError || bookingsError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 space-y-4">
+                <p className="text-destructive">Failed to load timeline data</p>
+                <Button onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+        );
+    }
+
+    // No data state
+    if (!roomTypes || roomTypes.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-96 space-y-4">
+                <p className="text-muted-foreground">No room types available</p>
+                <Button onClick={() => router.push('/rooms')}>Add Room Types</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -149,8 +182,8 @@ export function TimelineView() {
                 </div>
 
                 {/* Room Type Rows */}
-                {mockRoomTypes.map((roomType) => {
-                    const bookings = getBookingsForRoomType(roomType.id);
+                {roomTypes.map((roomType) => {
+                    const roomBookings = getBookingsForRoomType(roomType.id);
 
                     return (
                         <div key={roomType.id} className="flex border-b last:border-b-0 hover:bg-muted/30">
@@ -176,17 +209,17 @@ export function TimelineView() {
                                 </div>
 
                                 {/* Booking blocks */}
-                                {bookings.map((booking) => {
+                                {roomBookings.map((booking) => {
                                     const style = getBookingStyle(booking);
                                     return (
                                         <div
-                                            key={booking.id}
+                                            key={booking.booking_id}
                                             className={cn(
                                                 'absolute top-2 bottom-2 rounded-md px-2 py-1 text-white text-xs cursor-pointer transition-colors overflow-hidden',
                                                 getStatusColor(booking.status)
                                             )}
                                             style={style}
-                                            onClick={() => router.push(`/bookings/${booking.id}`)}
+                                            onClick={() => router.push(`/bookings/${booking.booking_id}`)}
                                             title={`${booking.customer_name || 'Guest'} - ${booking.status}`}
                                         >
                                             <div className="font-medium truncate">
