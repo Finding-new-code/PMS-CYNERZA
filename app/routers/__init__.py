@@ -9,6 +9,9 @@ from app.routers.calendar import router as calendar_router
 from app.routers.multi_room_booking import router as multi_room_booking_router
 from app.routers.audit_log import router as audit_log_router
 from app.routers.analytics import router as analytics_router
+from app.routers.dashboard import router as dashboard_router
+from app.routers.blocks import router as blocks_router
+from app.routers.allotments import router as allotments_router
 
 __all__ = [
     "auth_router",
@@ -19,5 +22,9 @@ __all__ = [
     "calendar_router",
     "multi_room_booking_router",
     "audit_log_router",
-    "analytics_router"
+    "analytics_router",
+    "dashboard_router",
+    "blocks_router",
+    "allotments_router",
 ]
+

@@ -24,7 +24,10 @@ from app.routers import (
     calendar_router,
     multi_room_booking_router,
     audit_log_router,
-    analytics_router
+    analytics_router,
+    dashboard_router,
+    blocks_router,
+    allotments_router,
 )
 
 settings = get_settings()
@@ -135,6 +138,9 @@ app.include_router(calendar_router)
 app.include_router(multi_room_booking_router)
 app.include_router(audit_log_router)
 app.include_router(analytics_router)
+app.include_router(dashboard_router)
+app.include_router(blocks_router)
+app.include_router(allotments_router)
 
 
 # Health check endpoint

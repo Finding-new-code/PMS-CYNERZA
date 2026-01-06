@@ -1,62 +1,72 @@
 'use client';
 
 import {
-  Users,
   CreditCard,
-  Calendar,
-  TrendingUp
+  TrendingUp,
+  DollarSign,
+  Percent
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RevenueChart } from '@/components/dashboard/revenue-chart';
 import { RecentBookings } from '@/components/dashboard/recent-bookings';
-import { useOverviewAnalytics } from '@/lib/hooks/use-analytics';
+import { TodaysActivityCard } from '@/components/dashboard/todays-activity-card';
+import { ForecastChart } from '@/components/dashboard/forecast-chart';
+import { QuickActions } from '@/components/dashboard/quick-actions';
+import { useQuickStats } from '@/lib/hooks/use-dashboard';
 import { useBookings } from '@/lib/hooks/use-bookings';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardHome() {
-  // Get date range for last 30 days
-  const endDate = new Date().toISOString().split('T')[0];
-  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  const { data: analytics, isLoading: analyticsLoading } = useOverviewAnalytics(startDate, endDate);
+  const { data: quickStats, isLoading: statsLoading } = useQuickStats();
   const { data: bookingsData, isLoading: bookingsLoading } = useBookings(1, 5);
 
   const recentBookings = Array.isArray(bookingsData) ? bookingsData.slice(0, 5) : [];
 
   const stats = [
     {
-      title: 'Total Bookings',
-      value: analytics?.total_bookings || 0,
-      description: `${analytics?.confirmed_bookings || 0} confirmed`,
-      icon: Calendar,
+      title: 'Revenue Today',
+      value: `$${quickStats?.revenue_today ? Number(quickStats.revenue_today).toLocaleString() : '0'}`,
+      description: 'Current day earnings',
+      icon: DollarSign,
     },
     {
-      title: 'Total Revenue',
-      value: `$${analytics?.total_revenue ? Number(analytics.total_revenue).toLocaleString() : '0'}`,
-      description: `Avg: $${analytics?.average_daily_rate ? Number(analytics.average_daily_rate).toFixed(2) : '0'}/day`,
+      title: 'Revenue MTD',
+      value: `$${quickStats?.revenue_mtd ? Number(quickStats.revenue_mtd).toLocaleString() : '0'}`,
+      description: 'Month to date',
       icon: CreditCard,
     },
     {
-      title: 'Occupancy Rate',
-      value: `${analytics?.occupancy_rate ? analytics.occupancy_rate.toFixed(1) : '0'}%`,
-      description: 'Last 30 days',
-      icon: TrendingUp,
+      title: 'Occupancy',
+      value: `${quickStats?.occupancy_today?.toFixed(1) || '0'}%`,
+      description: 'Today\'s rate',
+      icon: Percent,
     },
     {
-      title: 'Cancelled Bookings',
-      value: analytics?.cancelled_bookings || 0,
-      description: `of ${analytics?.total_bookings || 0} total`,
-      icon: Users,
+      title: 'RevPAR',
+      value: `$${quickStats?.revpar ? Number(quickStats.revpar).toFixed(2) : '0'}`,
+      description: 'Revenue per room',
+      icon: TrendingUp,
     },
   ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">Dashboard Overview</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">Welcome to PMS-CYNERZA. Here's what's happening today.</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Welcome to PMS-CYNERZA. Here's what's happening today.
+          </p>
+        </div>
       </div>
 
+      {/* Quick Actions */}
+      <QuickActions />
+
+      {/* Quick Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title}>
@@ -65,7 +75,7 @@ export default function DashboardHome() {
               <stat.icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
             </CardHeader>
             <CardContent>
-              {analyticsLoading ? (
+              {statsLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <>
@@ -80,6 +90,18 @@ export default function DashboardHome() {
         ))}
       </div>
 
+      {/* Main Content Grid */}
+      <div className="grid gap-4 lg:grid-cols-7">
+        {/* 14-Day Forecast (spans 4 columns) */}
+        <ForecastChart />
+
+        {/* Today's Activity (spans 3 columns) */}
+        <div className="lg:col-span-3">
+          <TodaysActivityCard />
+        </div>
+      </div>
+
+      {/* Secondary Content */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>

@@ -1,5 +1,5 @@
 # Models module initialization
-# Import all models here to ensure they're registere# Models module initialization
+# Import all models here to ensure they're registered
 
 from app.models.user import User
 from app.models.room_type import RoomType
@@ -8,6 +8,8 @@ from app.models.customer import Customer
 from app.models.booking import Booking, BookingStatus
 from app.models.booking_item import BookingItem
 from app.models.audit_log import AuditLog
+from app.models.room_block import RoomBlock, BlockType, BlockStatus
+from app.models.allotment import Allotment, AllotmentRoom, AllotmentStatus
 
 __all__ = [
     "User",
@@ -17,5 +19,12 @@ __all__ = [
     "BookingStatus",
     "BookingItem",
     "Customer",
-    "AuditLog"
+    "AuditLog",
+    "RoomBlock",
+    "BlockType",
+    "BlockStatus",
+    "Allotment",
+    "AllotmentRoom",
+    "AllotmentStatus",
 ]
+

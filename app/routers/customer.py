@@ -45,6 +45,9 @@ async def create_customer(
         address=customer_data.address,
         id_proof_type=customer_data.id_proof_type,
         id_proof_number=customer_data.id_proof_number,
+        is_vip=customer_data.is_vip,
+        notes=customer_data.notes,
+        preferences=customer_data.preferences,
     )
     db.add(customer)
     await db.commit()
@@ -58,6 +61,12 @@ async def create_customer(
         address=customer.address,
         id_proof_type=customer.id_proof_type,
         id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
         created_at=customer.created_at,
         updated_at=customer.updated_at,
         total_balance_due=Decimal("0.00"),
@@ -101,6 +110,9 @@ async def list_customers(
             address=c.address,
             id_proof_type=c.id_proof_type,
             id_proof_number=c.id_proof_number,
+            is_vip=c.is_vip,
+            lifetime_value=c.lifetime_value or Decimal("0.00"),
+            total_stays=c.total_stays or 0,
             created_at=c.created_at,
             total_balance_due=Decimal(str(c.total_balance_due)),
             booking_count=len(c.bookings)
@@ -155,6 +167,12 @@ async def get_customer(
         address=customer.address,
         id_proof_type=customer.id_proof_type,
         id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
         created_at=customer.created_at,
         updated_at=customer.updated_at,
         total_balance_due=Decimal(str(customer.total_balance_due)),
@@ -228,8 +246,232 @@ async def update_customer(
         address=customer.address,
         id_proof_type=customer.id_proof_type,
         id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
         created_at=customer.created_at,
         updated_at=customer.updated_at,
         total_balance_due=Decimal(str(customer.total_balance_due)),
         bookings=booking_summaries
     )
+
+
+@router.post("/merge", response_model=CustomerRead)
+async def merge_customers(
+    primary_id: int,
+    duplicate_ids: List[int],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Merge duplicate customer profiles into a primary profile.
+    All bookings from duplicate profiles are transferred to the primary.
+    """
+    from app.services import guest_service
+    
+    customer = await guest_service.merge_guests(db, primary_id, duplicate_ids)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Primary customer with ID {primary_id} not found"
+        )
+    
+    # Build response
+    result = await db.execute(
+        select(Customer)
+        .options(selectinload(Customer.bookings).selectinload(Booking.room_type))
+        .where(Customer.id == primary_id)
+    )
+    customer = result.scalar_one()
+    
+    booking_summaries = [
+        CustomerBookingSummary(
+            id=b.id,
+            room_type_name=b.room_type.name,
+            check_in=b.check_in,
+            check_out=b.check_out,
+            total_amount=b.total_amount,
+            amount_paid=b.amount_paid,
+            status=b.status
+        )
+        for b in customer.bookings
+    ]
+    
+    return CustomerRead(
+        id=customer.id,
+        name=customer.name,
+        email=customer.email,
+        phone=customer.phone,
+        address=customer.address,
+        id_proof_type=customer.id_proof_type,
+        id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
+        created_at=customer.created_at,
+        updated_at=customer.updated_at,
+        total_balance_due=Decimal(str(customer.total_balance_due)),
+        bookings=booking_summaries
+    )
+
+
+@router.get("/{customer_id}/duplicates", response_model=List[CustomerListRead])
+async def find_duplicates(
+    customer_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Find potential duplicate profiles for a customer.
+    """
+    from app.services import guest_service
+    
+    duplicates = await guest_service.find_potential_duplicates(db, customer_id)
+    
+    return [
+        CustomerListRead(
+            id=c.id,
+            name=c.name,
+            email=c.email,
+            phone=c.phone,
+            address=c.address,
+            id_proof_type=c.id_proof_type,
+            id_proof_number=c.id_proof_number,
+            is_vip=c.is_vip,
+            lifetime_value=c.lifetime_value or Decimal("0.00"),
+            total_stays=c.total_stays or 0,
+            created_at=c.created_at,
+            total_balance_due=Decimal(str(c.total_balance_due)),
+            booking_count=len(c.bookings) if hasattr(c, 'bookings') else 0
+        )
+        for c in duplicates
+    ]
+
+
+@router.patch("/{customer_id}/vip", response_model=CustomerRead)
+async def update_vip_status(
+    customer_id: int,
+    is_vip: bool,
+    vip_notes: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update VIP status for a customer.
+    """
+    from app.services import guest_service
+    
+    customer = await guest_service.update_vip_status(db, customer_id, is_vip, vip_notes)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Customer with ID {customer_id} not found"
+        )
+    
+    # Build response
+    result = await db.execute(
+        select(Customer)
+        .options(selectinload(Customer.bookings).selectinload(Booking.room_type))
+        .where(Customer.id == customer_id)
+    )
+    customer = result.scalar_one()
+    
+    booking_summaries = [
+        CustomerBookingSummary(
+            id=b.id,
+            room_type_name=b.room_type.name,
+            check_in=b.check_in,
+            check_out=b.check_out,
+            total_amount=b.total_amount,
+            amount_paid=b.amount_paid,
+            status=b.status
+        )
+        for b in customer.bookings
+    ]
+    
+    return CustomerRead(
+        id=customer.id,
+        name=customer.name,
+        email=customer.email,
+        phone=customer.phone,
+        address=customer.address,
+        id_proof_type=customer.id_proof_type,
+        id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
+        created_at=customer.created_at,
+        updated_at=customer.updated_at,
+        total_balance_due=Decimal(str(customer.total_balance_due)),
+        bookings=booking_summaries
+    )
+
+
+@router.post("/{customer_id}/recalculate-ltv", response_model=CustomerRead)
+async def recalculate_lifetime_value(
+    customer_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Recalculate lifetime value and total stays from booking history.
+    """
+    from app.services import guest_service
+    
+    customer = await guest_service.recalculate_lifetime_value(db, customer_id)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Customer with ID {customer_id} not found"
+        )
+    
+    # Build response
+    result = await db.execute(
+        select(Customer)
+        .options(selectinload(Customer.bookings).selectinload(Booking.room_type))
+        .where(Customer.id == customer_id)
+    )
+    customer = result.scalar_one()
+    
+    booking_summaries = [
+        CustomerBookingSummary(
+            id=b.id,
+            room_type_name=b.room_type.name,
+            check_in=b.check_in,
+            check_out=b.check_out,
+            total_amount=b.total_amount,
+            amount_paid=b.amount_paid,
+            status=b.status
+        )
+        for b in customer.bookings
+    ]
+    
+    return CustomerRead(
+        id=customer.id,
+        name=customer.name,
+        email=customer.email,
+        phone=customer.phone,
+        address=customer.address,
+        id_proof_type=customer.id_proof_type,
+        id_proof_number=customer.id_proof_number,
+        is_vip=customer.is_vip,
+        vip_notes=customer.vip_notes,
+        lifetime_value=customer.lifetime_value or Decimal("0.00"),
+        total_stays=customer.total_stays or 0,
+        notes=customer.notes,
+        preferences=customer.preferences,
+        created_at=customer.created_at,
+        updated_at=customer.updated_at,
+        total_balance_due=Decimal(str(customer.total_balance_due)),
+        bookings=booking_summaries
+    )
+
