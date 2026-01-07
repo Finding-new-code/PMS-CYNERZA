@@ -10,6 +10,8 @@ from app.models.booking_item import BookingItem
 from app.models.audit_log import AuditLog
 from app.models.room_block import RoomBlock, BlockType, BlockStatus
 from app.models.allotment import Allotment, AllotmentRoom, AllotmentStatus
+from app.models.room import Room, RoomStatus, OccupancyStatus
+from app.models.housekeeping_task import HousekeepingTask, TaskType, TaskStatus, TaskPriority
 
 __all__ = [
     "User",
@@ -26,5 +28,12 @@ __all__ = [
     "Allotment",
     "AllotmentRoom",
     "AllotmentStatus",
+    "Room",
+    "RoomStatus",
+    "OccupancyStatus",
+    "HousekeepingTask",
+    "TaskType",
+    "TaskStatus",
+    "TaskPriority",
 ]
 

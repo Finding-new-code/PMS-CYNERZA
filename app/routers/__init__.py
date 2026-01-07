@@ -12,6 +12,7 @@ from app.routers.analytics import router as analytics_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.blocks import router as blocks_router
 from app.routers.allotments import router as allotments_router
+from app.routers.housekeeping import router as housekeeping_router
 
 __all__ = [
     "auth_router",
@@ -26,5 +27,6 @@ __all__ = [
     "dashboard_router",
     "blocks_router",
     "allotments_router",
+    "housekeeping_router",
 ]
 

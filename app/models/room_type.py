@@ -26,6 +26,7 @@ class RoomType(Base):
     inventory = relationship("Inventory", back_populates="room_type", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="room_type")
     blocks = relationship("RoomBlock", back_populates="room_type", cascade="all, delete-orphan")
+    rooms = relationship("Room", back_populates="room_type")
     
     def __repr__(self):
         return f"<RoomType(id={self.id}, name={self.name}, total_rooms={self.total_rooms})>"
