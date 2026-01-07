@@ -13,6 +13,10 @@ from app.models.allotment import Allotment, AllotmentRoom, AllotmentStatus
 from app.models.room import Room, RoomStatus, OccupancyStatus
 from app.models.housekeeping_task import HousekeepingTask, TaskType, TaskStatus, TaskPriority
 from app.models.night_audit import NightAudit, RoomCharge
+from app.models.messaging import Message, MessageTemplate, Conversation, MessageChannel, MessageDirection, MessageStatus
+from app.models.automation import AutomationRule, AutomationLog, TriggerType, AutomationStatus
+from app.models.checkin import DigitalCheckIn, GuestDocument, CheckInStatus, DocumentType
+from app.models.upsell import UpsellProduct, UpsellOrder, UpsellOrderItem, ProductCategory, OrderStatus
 
 __all__ = [
     "User",

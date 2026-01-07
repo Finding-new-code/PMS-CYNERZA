@@ -14,6 +14,10 @@ from app.routers.blocks import router as blocks_router
 from app.routers.allotments import router as allotments_router
 from app.routers.housekeeping import router as housekeeping_router
 from app.routers.night_audit import router as night_audit_router
+from app.routers.messaging import router as messaging_router
+from app.routers.automation import router as automation_router
+from app.routers.checkin import router as checkin_router
+from app.routers.upsell import router as upsell_router
 
 __all__ = [
     "auth_router",
