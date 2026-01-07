@@ -29,6 +29,7 @@ from app.routers import (
     blocks_router,
     allotments_router,
     housekeeping_router,
+    night_audit_router,
 )
 
 settings = get_settings()
@@ -148,6 +149,7 @@ app.include_router(dashboard_router)
 app.include_router(blocks_router)
 app.include_router(allotments_router)
 app.include_router(housekeeping_router)
+app.include_router(night_audit_router)
 
 
 # Health check endpoint

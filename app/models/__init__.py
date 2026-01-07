@@ -12,6 +12,7 @@ from app.models.room_block import RoomBlock, BlockType, BlockStatus
 from app.models.allotment import Allotment, AllotmentRoom, AllotmentStatus
 from app.models.room import Room, RoomStatus, OccupancyStatus
 from app.models.housekeeping_task import HousekeepingTask, TaskType, TaskStatus, TaskPriority
+from app.models.night_audit import NightAudit, RoomCharge
 
 __all__ = [
     "User",
@@ -35,5 +36,7 @@ __all__ = [
     "TaskType",
     "TaskStatus",
     "TaskPriority",
+    "NightAudit",
+    "RoomCharge",
 ]
 

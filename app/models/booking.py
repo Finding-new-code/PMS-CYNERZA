@@ -12,10 +12,12 @@ from app.core.database import Base
 
 class BookingStatus(str, enum.Enum):
     """Booking status enumeration."""
+    PENDING = "pending"
     CONFIRMED = "confirmed"
     CANCELLED = "cancelled"
     CHECKED_IN = "checked_in"
     CHECKED_OUT = "checked_out"
+    NO_SHOW = "no_show"
 
 
 class Booking(Base):
