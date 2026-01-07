@@ -22,6 +22,18 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@hotel.com"
     ADMIN_PASSWORD: str = "admin123"
     
+    # Client Configuration
+    CLIENT_NAME: str = "PMS-CYNERZA"
+    CLIENT_TIER: str = "professional"  # starter, standard, professional, enterprise
+    MAX_ROOMS: int = 200
+    MAX_ROOM_TYPES: int = 20
+    
+    # Module Feature Flags (optional overrides)
+    ENABLE_HOUSEKEEPING: bool = True
+    ENABLE_NIGHT_AUDIT: bool = True
+    ENABLE_ALLOTMENTS: bool = True
+    ENABLE_BLOCKS: bool = True
+    
     # Inventory
     INVENTORY_DAYS_AHEAD: int = 90
     
