@@ -10,7 +10,10 @@ import {
     Users,
     Hotel,
     Settings,
-    Package
+    Package,
+    BarChart3,
+    Sparkles,
+    Moon
 } from 'lucide-react';
 
 const navigation = [
@@ -19,7 +22,10 @@ const navigation = [
     { name: 'Bookings', href: '/bookings', icon: BookOpen },
     { name: 'Customers', href: '/customers', icon: Users },
     { name: 'Rooms', href: '/rooms', icon: Hotel },
-    { name: 'Inventory', href: '/rooms/inventory', icon: Package },
+    { name: 'Inventory', href: '/inventory', icon: Package },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Housekeeping', href: '/housekeeping', icon: Sparkles },
+    { name: 'Night Audit', href: '/night-audit', icon: Moon },
     { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
